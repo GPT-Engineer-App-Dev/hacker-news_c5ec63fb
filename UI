@@ -1,0 +1,53 @@
+import React, { useState, useEffect } from "react";
+import { Box, Flex, Heading, Text, Link, Spinner } from "@chakra-ui/react";
+import { FaExternalLinkAlt } from "react-icons/fa";
+
+const Index = () => {
+  const [stories, setStories] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("https://hacker-news.firebaseio.com/v0/topstories.json")
+      .then((response) => response.json())
+      .then((storyIds) => {
+        const fetchStories = storyIds.slice(0, 30).map((id) => fetch(`https://hacker-news.firebaseio.com/v0/item/${id}.json`).then((response) => response.json()));
+
+        Promise.all(fetchStories)
+          .then((stories) => {
+            setStories(stories);
+            setLoading(false);
+          })
+          .catch((error) => console.error(error));
+      })
+      .catch((error) => console.error(error));
+  }, []);
+
+  return (
+    <Box maxW="800px" mx="auto" p={6}>
+      <Heading mb={4}>Hacker News</Heading>
+      {loading ? (
+        <Flex justify="center">
+          <Spinner />
+        </Flex>
+      ) : (
+        stories.map((story) => (
+          <Box key={story.id} mb={4}>
+            <Flex alignItems="center" mb={2}>
+              <Text fontWeight="bold" mr={2}>
+                {story.score}
+              </Text>
+              <Link href={story.url} isExternal>
+                {story.title} <FaExternalLinkAlt />
+              </Link>
+            </Flex>
+            <Text fontSize="sm" color="gray.500">
+              by {story.by}
+            </Text>
+          </Box>
+        ))
+      )}
+    </Box>
+  );
+};
+
+export default Index;
